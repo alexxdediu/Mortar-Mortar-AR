@@ -7,6 +7,7 @@ using UnityEngine.XR.ARSubsystems;
 public class AutoPlacementController : MonoBehaviour
 {
     [SerializeField] private GameObject tower;
+    private GameObject towerInstance;
 
     private ARRaycastManager aRRaycastManager;
 
@@ -25,11 +26,35 @@ public class AutoPlacementController : MonoBehaviour
         {
             Pose hitPose = hits[0].pose;
 
+            
             tower.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+            AddFixedJointsToTower(tower);
             tower.transform.position = new Vector3(hitPose.position.x, hitPose.position.y, hitPose.position.z);
-            tower.transform.rotation = Quaternion.LookRotation(hitPose.up, Vector3.up) * Quaternion.Euler(90, 0, 0); Instantiate(tower);
-
+            tower.transform.rotation = hitPose.rotation;
+            Instantiate(tower);
             towerPlaced = true;
+
+            RemoveFixedJointsFromTower(tower);
+
+        }
+    }
+
+    private void AddFixedJointsToTower(GameObject tower)
+    {
+        Rigidbody[] rigidbodies = tower.GetComponentsInChildren<Rigidbody>();
+        for (int i = 1; i < rigidbodies.Length; i++)
+        {
+            FixedJoint fixedJoint = rigidbodies[i].gameObject.AddComponent<FixedJoint>();
+            fixedJoint.connectedBody = rigidbodies[i - 1];
+        }
+    }
+
+    private void RemoveFixedJointsFromTower(GameObject tower)
+    {
+        FixedJoint[] fixedJoints = tower.GetComponentsInChildren<FixedJoint>();
+        foreach (FixedJoint joint in fixedJoints)
+        {
+            Destroy(joint);
         }
     }
 }
